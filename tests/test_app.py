@@ -90,8 +90,6 @@ def test_get_info_omits_mp3_when_ffmpeg_missing(monkeypatch):
                 }],
             }
 
-    monkeypatch.setattr(app, 'ffmpeg_available', lambda: False)
-
     with mock.patch('yt_dlp.YoutubeDL', FakeYoutubeDL):
         client = app.app.test_client()
         response = client.post('/api/info', json={'url': 'https://youtu.be/test'})
@@ -101,9 +99,7 @@ def test_get_info_omits_mp3_when_ffmpeg_missing(monkeypatch):
     assert [stream['format_id'] for stream in payload['streams']] == ['140']
 
 
-def test_start_download_rejects_mp3_without_ffmpeg(monkeypatch):
-    monkeypatch.setattr(app, 'ffmpeg_available', lambda: False)
-
+def test_start_download_rejects_mp3_requests():
     client = app.app.test_client()
     response = client.post('/api/download', json={
         'url': 'https://youtu.be/test',
@@ -112,5 +108,5 @@ def test_start_download_rejects_mp3_without_ffmpeg(monkeypatch):
 
     assert response.status_code == 400
     assert response.get_json() == {
-        'error': 'MP3 conversion is unavailable on this server because ffmpeg and ffprobe are not installed.'
+        'error': 'MP3 conversion is no longer supported. Choose one of the available audio formats instead.'
     }

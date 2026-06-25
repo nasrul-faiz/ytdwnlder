@@ -1,5 +1,4 @@
 import os
-import shutil
 import uuid
 import threading
 import json
@@ -42,7 +41,7 @@ def _cookies_from_browser():
     return tuple(parts)
 
 
-def build_ydl_opts(*, skip_download=False, progress_hooks=None, format_id=None, mp3=False):
+def build_ydl_opts(*, skip_download=False, progress_hooks=None, format_id=None):
     opts = {
         'quiet': True,
         'no_warnings': True,
@@ -68,19 +67,7 @@ def build_ydl_opts(*, skip_download=False, progress_hooks=None, format_id=None, 
     if cookies_from_browser:
         opts['cookiesfrombrowser'] = cookies_from_browser
 
-    if mp3:
-        opts['format'] = 'bestaudio/best'
-        opts['postprocessors'] = [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',
-        }]
-
     return opts
-
-
-def ffmpeg_available():
-    return bool(shutil.which('ffmpeg') and shutil.which('ffprobe'))
 
 
 def human_size(n_bytes):
@@ -167,30 +154,13 @@ def get_info():
             0 if x['type'] == 'progressive' else (1 if x['type'] == 'video' else 2),
         ))
 
-        response_streams = list(streams)
-        if ffmpeg_available():
-            response_streams.insert(0, {
-                'format_id': '__mp3__',
-                'type': 'audio',
-                'ext': 'mp3',
-                'resolution': None,
-                'abr': '128kbps',
-                'vbr': None,
-                'filesize': '~varies',
-                'note': 'Best audio -> MP3',
-                'has_video': False,
-                'has_audio': True,
-                'vcodec': None,
-                'acodec': 'mp3',
-            })
-
         return jsonify({
             'title': title,
             'author': author,
             'duration': duration,
             'thumbnail': thumbnail,
             'views': views,
-            'streams': response_streams,
+            'streams': streams,
         })
 
     except Exception as e:
@@ -214,9 +184,9 @@ def start_download():
     if not url or not format_id:
         return jsonify({'error': 'URL and format required'}), 400
 
-    if format_id == '__mp3__' and not ffmpeg_available():
+    if format_id == '__mp3__':
         return jsonify({
-            'error': 'MP3 conversion is unavailable on this server because ffmpeg and ffprobe are not installed.'
+            'error': 'MP3 conversion is no longer supported. Choose one of the available audio formats instead.'
         }), 400
 
     job_id = str(uuid.uuid4())
@@ -250,19 +220,10 @@ def start_download():
         try:
             common_opts = build_ydl_opts(progress_hooks=[progress_hook])
             common_opts['outtmpl'] = os.path.join(out_dir, '%(title)s.%(ext)s')
-
-            if format_id == '__mp3__':
-                ydl_opts = {
-                    **common_opts,
-                    **build_ydl_opts(mp3=True),
-                    'outtmpl': common_opts['outtmpl'],
-                    'progress_hooks': common_opts['progress_hooks'],
-                }
-            else:
-                ydl_opts = {
-                    **common_opts,
-                    'format': format_id,
-                }
+            ydl_opts = {
+                **common_opts,
+                'format': format_id,
+            }
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
