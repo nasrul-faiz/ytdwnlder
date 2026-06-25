@@ -154,13 +154,28 @@ def get_info():
             0 if x['type'] == 'progressive' else (1 if x['type'] == 'video' else 2),
         ))
 
+        mp3_option = {
+            'format_id': '__mp3__',
+            'type': 'audio',
+            'ext': 'mp3',
+            'resolution': None,
+            'abr': '192kbps',
+            'vbr': None,
+            'filesize': '~varies',
+            'note': 'Best audio → MP3',
+            'has_video': False,
+            'has_audio': True,
+            'vcodec': None,
+            'acodec': 'mp3',
+        }
+
         return jsonify({
             'title': title,
             'author': author,
             'duration': duration,
             'thumbnail': thumbnail,
             'views': views,
-            'streams': streams,
+            'streams': [mp3_option] + streams,
         })
 
     except Exception as e:
@@ -183,11 +198,6 @@ def start_download():
 
     if not url or not format_id:
         return jsonify({'error': 'URL and format required'}), 400
-
-    if format_id == '__mp3__':
-        return jsonify({
-            'error': 'MP3 conversion is no longer supported. Choose one of the available audio formats instead.'
-        }), 400
 
     job_id = str(uuid.uuid4())
     out_dir = os.path.join(DOWNLOAD_FOLDER, job_id)
@@ -220,10 +230,22 @@ def start_download():
         try:
             common_opts = build_ydl_opts(progress_hooks=[progress_hook])
             common_opts['outtmpl'] = os.path.join(out_dir, '%(title)s.%(ext)s')
-            ydl_opts = {
-                **common_opts,
-                'format': format_id,
-            }
+
+            if format_id == '__mp3__':
+                ydl_opts = {
+                    **common_opts,
+                    'format': 'bestaudio/best',
+                    'postprocessors': [{
+                        'key': 'FFmpegExtractAudio',
+                        'preferredcodec': 'mp3',
+                        'preferredquality': '192',
+                    }],
+                }
+            else:
+                ydl_opts = {
+                    **common_opts,
+                    'format': format_id,
+                }
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])

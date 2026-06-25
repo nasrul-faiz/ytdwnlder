@@ -659,7 +659,7 @@
 <div class="container">
   <div class="hero">
     <h2>Download YouTube Videos</h2>
-    <p>Paste any YouTube link — download video or original audio formats in any available quality</p>
+    <p>Paste any YouTube link — download as MP3, MP4, or any available quality</p>
   </div>
 
   <div class="search-box">
@@ -693,7 +693,7 @@
         <div class="tab active" onclick="setTab('all', this)">All</div>
         <div class="tab" onclick="setTab('progressive', this)">Video + Audio</div>
         <div class="tab" onclick="setTab('video', this)">Video Only</div>
-        <div class="tab" onclick="setTab('audio', this)">Audio</div>
+        <div class="tab" onclick="setTab('audio', this)">Audio / MP3</div>
       </div>
       <div class="stream-list" id="streamList"></div>
       <div class="download-bar">
@@ -746,10 +746,10 @@
     <div class="about-name">PyTube Downloader</div>
     <div class="about-version">Version 2.0 &bull; Built on yt-dlp</div>
     <div class="about-desc">
-      A private YouTube downloader supporting original audio and video stream formats. Protected by a personal passcode.
+      A private YouTube downloader supporting MP3, MP4, and all available stream formats. Protected by a personal passcode.
     </div>
-    <div class="about-row"><span>Engine</span><span>yt-dlp</span></div>
-    <div class="about-row"><span>Audio</span><span>Original audio formats such as M4A or WEBM</span></div>
+    <div class="about-row"><span>Engine</span><span>yt-dlp + ffmpeg</span></div>
+    <div class="about-row"><span>Audio</span><span>MP3 192kbps via ffmpeg</span></div>
     <div class="about-row"><span>Security</span><span>Passcode protected</span></div>
     <div class="about-row"><span>Mode</span><span id="aboutMode"></span></div>
     <div style="margin-top:20px;text-align:center">
@@ -1127,12 +1127,15 @@ function renderStreams() {
   }
 
   list.innerHTML = filtered.map(s => {
+    const isMp3 = s.format_id === '__mp3__';
     const isSelected = selectedFormatId === s.format_id;
-    let label = s.type === 'progressive' ? `Video + Audio — ${s.resolution || '?'} .${s.ext}`
+    let label = isMp3 ? `MP3 Audio <span class="recommended-tag">★ Recommended</span>`
+      : s.type === 'progressive' ? `Video + Audio — ${s.resolution || '?'} .${s.ext}`
       : s.type === 'video' ? `Video Only — ${s.resolution || '?'} .${s.ext}`
       : `Audio — ${s.abr || s.note || '?'} .${s.ext}`;
-    const sub = [s.vcodec, s.acodec].filter(Boolean).join(' + ') || s.note || '';
-    return `<div class="stream-item${isSelected?' selected':''}" onclick="selectStream('${s.format_id}', this)">
+    const sub = isMp3 ? 'Best quality audio converted to MP3 via ffmpeg'
+      : [s.vcodec, s.acodec].filter(Boolean).join(' + ') || s.note || '';
+    return `<div class="stream-item${isMp3?' mp3-highlight':''}${isSelected?' selected':''}" onclick="selectStream('${s.format_id}', this)">`
       <div class="stream-radio"></div>
       <div class="stream-info">
         <div class="stream-label">${label}</div>
@@ -1189,7 +1192,7 @@ function pollProgress() {
         document.getElementById('doneBtn').style.display = 'block';
         document.getElementById('downloadBtn').disabled = false;
       } else if (data.status === 'processing') {
-        document.getElementById('progressStatus').textContent = 'Finalizing file...';
+        document.getElementById('progressStatus').textContent = 'Converting to MP3...';
         document.getElementById('progressPct').textContent = '99%';
         document.getElementById('progressFill').style.width = '99%';
       } else if (data.status === 'error') {

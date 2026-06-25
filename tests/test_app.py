@@ -63,7 +63,7 @@ def test_get_info_rewrites_bot_error(monkeypatch):
     }
 
 
-def test_get_info_omits_mp3_when_ffmpeg_missing(monkeypatch):
+def test_get_info_includes_mp3_option(monkeypatch):
     class FakeYoutubeDL:
         def __init__(self, params):
             self.params = params
@@ -96,17 +96,7 @@ def test_get_info_omits_mp3_when_ffmpeg_missing(monkeypatch):
 
     assert response.status_code == 200
     payload = response.get_json()
-    assert [stream['format_id'] for stream in payload['streams']] == ['140']
-
-
-def test_start_download_rejects_mp3_requests():
-    client = app.app.test_client()
-    response = client.post('/api/download', json={
-        'url': 'https://youtu.be/test',
-        'format_id': '__mp3__',
-    })
-
-    assert response.status_code == 400
-    assert response.get_json() == {
-        'error': 'MP3 conversion is no longer supported. Choose one of the available audio formats instead.'
-    }
+    format_ids = [stream['format_id'] for stream in payload['streams']]
+    assert '__mp3__' in format_ids
+    assert '140' in format_ids
+    assert format_ids[0] == '__mp3__'
