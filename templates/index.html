@@ -171,6 +171,38 @@
       text-decoration: underline;
     }
 
+    .pin-text-input-wrap {
+      margin-top: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pin-text-input-wrap input {
+      width: 160px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 2px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 1.2rem;
+      letter-spacing: 6px;
+      text-align: center;
+      outline: none;
+    }
+
+    .pin-text-input-wrap input:focus {
+      border-color: var(--accent);
+    }
+
+    .pin-text-input-toggle {
+      font-size: 0.78rem;
+      color: var(--text2);
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
     /* ══════════════════ HEADER ══════════════════ */
     header {
       position: sticky; top: 0; z-index: 100;
@@ -608,6 +640,10 @@
   <div class="pin-dots" id="pinDots"></div>
   <div class="pin-error" id="pinError"></div>
   <div class="pin-pad" id="pinPad"></div>
+  <div class="pin-text-input-wrap" id="pinTextWrap" style="display:none">
+    <input type="password" id="pinTextInput" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="••••" autocomplete="off" />
+  </div>
+  <div class="pin-text-input-toggle" id="pinToggleMode" onclick="togglePinInputMode()">Tak nampak nombor? Taip di sini</div>
 </div>
 
 <!-- ══════════════ TRANSITION OVERLAY ══════════════ -->
@@ -898,6 +934,64 @@ function pinKeyPress(key) {
 
 buildPinDots('pinDots', pinLength, pinInput);
 buildPinPad('pinPad', pinKeyPress);
+
+// Keyboard support — desktop users can type PIN directly
+document.addEventListener('keydown', e => {
+  if (pinLocked) {
+    if (e.key >= '0' && e.key <= '9') pinKeyPress(e.key);
+    else if (e.key === 'Backspace') pinKeyPress('⌫');
+  }
+});
+
+// Text input fallback
+let pinInputMode = 'pad';
+function togglePinInputMode() {
+  pinInputMode = pinInputMode === 'pad' ? 'text' : 'pad';
+  const padEl = document.getElementById('pinPad');
+  const textWrap = document.getElementById('pinTextWrap');
+  const toggle = document.getElementById('pinToggleMode');
+  if (pinInputMode === 'text') {
+    padEl.style.display = 'none';
+    textWrap.style.display = 'flex';
+    toggle.textContent = 'Guna pad nombor';
+    const inp = document.getElementById('pinTextInput');
+    inp.value = '';
+    inp.focus();
+    inp.oninput = () => {
+      const val = inp.value.replace(/\D/g, '');
+      inp.value = val;
+      pinInput = val;
+      buildPinDots('pinDots', pinLength, pinInput);
+      document.getElementById('pinError').textContent = '';
+      if (pinInput.length === pinLength) {
+        inp.disabled = true;
+        if (pinInput === savedPin) {
+          showTransition('Welcome back!', () => {
+            document.getElementById('pinLock').classList.add('hidden');
+            pinLocked = false;
+          });
+        } else {
+          document.getElementById('pinDots').classList.add('shake');
+          setTimeout(() => document.getElementById('pinDots').classList.remove('shake'), 450);
+          document.getElementById('pinError').textContent = 'Incorrect passcode. Try again.';
+          pinInput = '';
+          setTimeout(() => {
+            inp.value = '';
+            inp.disabled = false;
+            inp.focus();
+            buildPinDots('pinDots', pinLength, pinInput);
+          }, 500);
+        }
+      }
+    };
+  } else {
+    padEl.style.display = '';
+    textWrap.style.display = 'none';
+    toggle.textContent = 'Tak nampak nombor? Taip di sini';
+    pinInput = '';
+    buildPinDots('pinDots', pinLength, pinInput);
+  }
+}
 
 /* ════════════════════════════════════════════
    CHANGE PASSCODE MODAL
