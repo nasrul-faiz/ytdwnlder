@@ -2,18 +2,19 @@ import os
 import uuid
 import threading
 import json
+import subprocess
 from flask import Flask, render_template, request, jsonify, send_file, abort
-from pytube import YouTube
-from pytube.exceptions import RegexMatchError, VideoUnavailable
 
 app = Flask(__name__)
-app.config['DOWNLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'downloads')
-os.makedirs(app.config['DOWNLOAD_FOLDER'], exist_ok=True)
+DOWNLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'downloads')
+os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
 
-download_progress = {}
+download_jobs = {}
 
 
 def human_size(n_bytes):
+    if not n_bytes:
+        return 'Unknown'
     for unit in ('B', 'KB', 'MB', 'GB'):
         if n_bytes < 1024:
             return f"{n_bytes:.1f} {unit}"
@@ -34,48 +35,95 @@ def get_info():
         return jsonify({'error': 'No URL provided'}), 400
 
     try:
-        yt = YouTube(url)
-        title = yt.title
-        author = yt.author
-        length = yt.length
-        thumbnail = yt.thumbnail_url
-        views = yt.views
+        import yt_dlp
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'skip_download': True,
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
 
+        title = info.get('title', 'Unknown')
+        author = info.get('uploader', 'Unknown')
+        duration_sec = info.get('duration', 0) or 0
+        thumbnail = info.get('thumbnail', '')
+        view_count = info.get('view_count', 0)
+
+        minutes, seconds = divmod(int(duration_sec), 60)
+        duration = f"{minutes}:{seconds:02d}"
+        views = f"{view_count:,}" if view_count else 'N/A'
+
+        formats = info.get('formats', [])
         streams = []
-        for s in yt.streams:
-            entry = {
-                'itag': s.itag,
-                'mime_type': s.mime_type,
-                'type': s.type,
-                'progressive': s.is_progressive,
-                'resolution': s.resolution if s.type == 'video' else None,
-                'abr': s.abr if s.type == 'audio' else None,
-                'filesize': human_size(s.filesize) if s.filesize else 'Unknown',
-                'codecs': s.codecs,
-                'subtype': s.subtype,
-            }
-            streams.append(entry)
+
+        for f in formats:
+            fid = f.get('format_id', '')
+            vcodec = f.get('vcodec', 'none')
+            acodec = f.get('acodec', 'none')
+            has_video = vcodec and vcodec != 'none'
+            has_audio = acodec and acodec != 'none'
+
+            if not has_video and not has_audio:
+                continue
+
+            ext = f.get('ext', '?')
+            filesize = f.get('filesize') or f.get('filesize_approx')
+            resolution = f.get('resolution') or (f'{f["width"]}x{f["height"]}' if f.get('width') and f.get('height') else None)
+            abr = f.get('abr')
+            vbr = f.get('vbr')
+            note = f.get('format_note', '')
+
+            if has_video and has_audio:
+                stream_type = 'progressive'
+            elif has_video:
+                stream_type = 'video'
+            else:
+                stream_type = 'audio'
+
+            streams.append({
+                'format_id': fid,
+                'type': stream_type,
+                'ext': ext,
+                'resolution': resolution,
+                'abr': f"{abr:.0f}kbps" if abr else None,
+                'vbr': f"{vbr:.0f}kbps" if vbr else None,
+                'filesize': human_size(filesize),
+                'note': note,
+                'has_video': has_video,
+                'has_audio': has_audio,
+                'vcodec': vcodec if has_video else None,
+                'acodec': acodec if has_audio else None,
+            })
 
         streams.sort(key=lambda x: (
-            0 if x['progressive'] else (1 if x['type'] == 'video' else 2),
-            -(int(x['resolution'][:-1]) if x['resolution'] and x['resolution'][:-1].isdigit() else 0)
+            0 if x['type'] == 'progressive' else (1 if x['type'] == 'video' else 2),
         ))
 
-        minutes, seconds = divmod(length or 0, 60)
-        duration = f"{minutes}:{seconds:02d}"
+        mp3_option = {
+            'format_id': '__mp3__',
+            'type': 'audio',
+            'ext': 'mp3',
+            'resolution': None,
+            'abr': '128kbps',
+            'vbr': None,
+            'filesize': '~varies',
+            'note': 'Best audio → MP3',
+            'has_video': False,
+            'has_audio': True,
+            'vcodec': None,
+            'acodec': 'mp3',
+        }
 
         return jsonify({
             'title': title,
             'author': author,
             'duration': duration,
             'thumbnail': thumbnail,
-            'views': f"{views:,}" if views else 'N/A',
-            'streams': streams,
+            'views': views,
+            'streams': [mp3_option] + streams,
         })
-    except RegexMatchError:
-        return jsonify({'error': 'Invalid YouTube URL'}), 400
-    except VideoUnavailable:
-        return jsonify({'error': 'Video is unavailable or private'}), 400
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -84,41 +132,80 @@ def get_info():
 def start_download():
     data = request.get_json()
     url = (data or {}).get('url', '').strip()
-    itag = (data or {}).get('itag')
+    format_id = (data or {}).get('format_id', '').strip()
 
-    if not url or not itag:
-        return jsonify({'error': 'URL and stream selection required'}), 400
+    if not url or not format_id:
+        return jsonify({'error': 'URL and format required'}), 400
 
     job_id = str(uuid.uuid4())
-    download_progress[job_id] = {'status': 'starting', 'percent': 0, 'filename': None, 'error': None}
+    out_dir = os.path.join(DOWNLOAD_FOLDER, job_id)
+    os.makedirs(out_dir, exist_ok=True)
+
+    download_jobs[job_id] = {
+        'status': 'starting',
+        'percent': 0,
+        'filename': None,
+        'filepath': None,
+        'error': None,
+    }
 
     def run():
+        import yt_dlp
+
+        def progress_hook(d):
+            if d['status'] == 'downloading':
+                pct_str = d.get('_percent_str', '0%').strip().replace('%', '')
+                try:
+                    pct = float(pct_str)
+                except ValueError:
+                    pct = 0
+                download_jobs[job_id]['percent'] = int(pct)
+                download_jobs[job_id]['status'] = 'downloading'
+            elif d['status'] == 'finished':
+                download_jobs[job_id]['percent'] = 99
+                download_jobs[job_id]['status'] = 'processing'
+
         try:
-            def on_progress(stream, chunk, remaining):
-                total = stream.filesize
-                downloaded = total - remaining
-                pct = int(downloaded / total * 100) if total else 0
-                download_progress[job_id]['percent'] = pct
-                download_progress[job_id]['status'] = 'downloading'
+            if format_id == '__mp3__':
+                ydl_opts = {
+                    'format': 'bestaudio/best',
+                    'outtmpl': os.path.join(out_dir, '%(title)s.%(ext)s'),
+                    'postprocessors': [{
+                        'key': 'FFmpegExtractAudio',
+                        'preferredcodec': 'mp3',
+                        'preferredquality': '192',
+                    }],
+                    'progress_hooks': [progress_hook],
+                    'quiet': True,
+                    'no_warnings': True,
+                }
+            else:
+                ydl_opts = {
+                    'format': format_id,
+                    'outtmpl': os.path.join(out_dir, '%(title)s.%(ext)s'),
+                    'progress_hooks': [progress_hook],
+                    'quiet': True,
+                    'no_warnings': True,
+                }
 
-            def on_complete(stream, path):
-                download_progress[job_id]['status'] = 'done'
-                download_progress[job_id]['percent'] = 100
-                download_progress[job_id]['filename'] = os.path.basename(path)
-                download_progress[job_id]['filepath'] = path
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url])
 
-            yt = YouTube(url, on_progress_callback=on_progress, on_complete_callback=on_complete)
-            stream = yt.streams.get_by_itag(int(itag))
-            if not stream:
-                download_progress[job_id]['status'] = 'error'
-                download_progress[job_id]['error'] = 'Stream not found'
-                return
-            out_dir = os.path.join(app.config['DOWNLOAD_FOLDER'], job_id)
-            os.makedirs(out_dir, exist_ok=True)
-            stream.download(output_path=out_dir)
+            files = os.listdir(out_dir)
+            if files:
+                fname = files[0]
+                fpath = os.path.join(out_dir, fname)
+                download_jobs[job_id]['status'] = 'done'
+                download_jobs[job_id]['percent'] = 100
+                download_jobs[job_id]['filename'] = fname
+                download_jobs[job_id]['filepath'] = fpath
+            else:
+                download_jobs[job_id]['status'] = 'error'
+                download_jobs[job_id]['error'] = 'Download failed: no output file found'
+
         except Exception as e:
-            download_progress[job_id]['status'] = 'error'
-            download_progress[job_id]['error'] = str(e)
+            download_jobs[job_id]['status'] = 'error'
+            download_jobs[job_id]['error'] = str(e)
 
     t = threading.Thread(target=run, daemon=True)
     t.start()
@@ -128,7 +215,7 @@ def start_download():
 
 @app.route('/api/progress/<job_id>')
 def progress(job_id):
-    info = download_progress.get(job_id)
+    info = download_jobs.get(job_id)
     if not info:
         return jsonify({'error': 'Job not found'}), 404
     return jsonify(info)
@@ -136,7 +223,7 @@ def progress(job_id):
 
 @app.route('/api/file/<job_id>')
 def serve_file(job_id):
-    info = download_progress.get(job_id)
+    info = download_jobs.get(job_id)
     if not info or info.get('status') != 'done':
         abort(404)
     filepath = info.get('filepath')

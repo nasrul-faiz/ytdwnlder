@@ -19,6 +19,8 @@
       --radius: 12px;
     }
 
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
       background: var(--bg);
       color: var(--text);
@@ -51,38 +53,14 @@
 
     .logo svg { width: 20px; height: 20px; fill: white; }
 
-    header h1 {
-      font-size: 1.25rem;
-      font-weight: 700;
-      letter-spacing: -0.3px;
-    }
+    header h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.3px; }
+    header span { color: var(--accent); }
 
-    header span {
-      color: var(--accent);
-    }
+    .container { width: 100%; max-width: 760px; padding: 48px 24px; }
 
-    .container {
-      width: 100%;
-      max-width: 760px;
-      padding: 48px 24px;
-    }
-
-    .hero {
-      text-align: center;
-      margin-bottom: 40px;
-    }
-
-    .hero h2 {
-      font-size: 2.2rem;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      margin-bottom: 10px;
-    }
-
-    .hero p {
-      color: var(--muted);
-      font-size: 1rem;
-    }
+    .hero { text-align: center; margin-bottom: 40px; }
+    .hero h2 { font-size: 2.2rem; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 10px; }
+    .hero p { color: var(--muted); font-size: 1rem; }
 
     .search-box {
       display: flex;
@@ -94,9 +72,7 @@
       transition: border-color 0.2s;
     }
 
-    .search-box:focus-within {
-      border-color: var(--accent);
-    }
+    .search-box:focus-within { border-color: var(--accent); }
 
     .search-box input {
       flex: 1;
@@ -134,7 +110,6 @@
       background: var(--surface2);
       color: var(--text);
     }
-
     .btn-ghost:hover { background: var(--border); }
 
     .error-msg {
@@ -145,10 +120,8 @@
       align-items: center;
       gap: 6px;
     }
-
     .error-msg.show { display: flex; }
 
-    /* Video card */
     .video-card {
       margin-top: 36px;
       background: var(--surface);
@@ -157,7 +130,6 @@
       overflow: hidden;
       display: none;
     }
-
     .video-card.show { display: block; }
 
     .video-meta {
@@ -176,10 +148,7 @@
       background: var(--surface2);
     }
 
-    .video-details {
-      flex: 1;
-      min-width: 0;
-    }
+    .video-details { flex: 1; min-width: 0; }
 
     .video-title {
       font-size: 1rem;
@@ -192,17 +161,9 @@
       overflow: hidden;
     }
 
-    .video-author {
-      font-size: 0.83rem;
-      color: var(--muted);
-      margin-bottom: 8px;
-    }
+    .video-author { font-size: 0.83rem; color: var(--muted); margin-bottom: 8px; }
 
-    .badges {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
+    .badges { display: flex; gap: 8px; flex-wrap: wrap; }
 
     .badge {
       font-size: 0.75rem;
@@ -212,7 +173,6 @@
       color: var(--muted);
     }
 
-    /* Streams */
     .streams-section { padding: 20px; }
 
     .streams-title {
@@ -224,11 +184,7 @@
       margin-bottom: 14px;
     }
 
-    .tab-bar {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 16px;
-    }
+    .tab-bar { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
 
     .tab {
       padding: 6px 16px;
@@ -242,17 +198,9 @@
       transition: all 0.15s;
     }
 
-    .tab.active {
-      background: var(--accent);
-      color: white;
-      border-color: var(--accent);
-    }
+    .tab.active { background: var(--accent); color: white; border-color: var(--accent); }
 
-    .stream-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+    .stream-list { display: flex; flex-direction: column; gap: 8px; }
 
     .stream-item {
       display: flex;
@@ -273,6 +221,20 @@
       background: rgba(255,68,68,0.07);
     }
 
+    .stream-item.mp3-highlight {
+      border-color: #2ecc71;
+      background: rgba(46,204,113,0.06);
+    }
+
+    .stream-item.mp3-highlight.selected {
+      border-color: #2ecc71;
+      background: rgba(46,204,113,0.14);
+    }
+
+    .stream-item.mp3-highlight .stream-radio.selected-radio {
+      border-color: #2ecc71;
+    }
+
     .stream-radio {
       width: 16px;
       height: 16px;
@@ -285,10 +247,7 @@
       transition: border-color 0.15s;
     }
 
-    .stream-item.selected .stream-radio {
-      border-color: var(--accent);
-    }
-
+    .stream-item.selected .stream-radio { border-color: var(--accent); }
     .stream-item.selected .stream-radio::after {
       content: '';
       width: 8px;
@@ -297,23 +256,23 @@
       background: var(--accent);
     }
 
+    .stream-item.mp3-highlight.selected .stream-radio { border-color: #2ecc71; }
+    .stream-item.mp3-highlight.selected .stream-radio::after { background: #2ecc71; }
+
     .stream-info { flex: 1; }
+    .stream-label { font-size: 0.9rem; font-weight: 600; margin-bottom: 2px; }
+    .stream-sub { font-size: 0.78rem; color: var(--muted); }
+    .stream-size { font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
 
-    .stream-label {
-      font-size: 0.9rem;
-      font-weight: 600;
-      margin-bottom: 2px;
-    }
-
-    .stream-sub {
-      font-size: 0.78rem;
-      color: var(--muted);
-    }
-
-    .stream-size {
-      font-size: 0.8rem;
-      color: var(--muted);
-      white-space: nowrap;
+    .recommended-tag {
+      font-size: 0.68rem;
+      background: rgba(46,204,113,0.15);
+      color: #2ecc71;
+      border: 1px solid rgba(46,204,113,0.3);
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-left: 6px;
+      vertical-align: middle;
     }
 
     .download-bar {
@@ -323,7 +282,6 @@
       align-items: center;
     }
 
-    /* Progress */
     .progress-card {
       margin-top: 20px;
       background: var(--surface);
@@ -332,7 +290,6 @@
       padding: 20px;
       display: none;
     }
-
     .progress-card.show { display: block; }
 
     .progress-header {
@@ -343,7 +300,6 @@
     }
 
     .progress-label { font-weight: 600; }
-
     .progress-pct { color: var(--accent); font-weight: 700; }
 
     .progress-track {
@@ -361,16 +317,9 @@
       transition: width 0.3s;
     }
 
-    .progress-status {
-      margin-top: 10px;
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
+    .progress-status { margin-top: 10px; font-size: 0.8rem; color: var(--muted); }
 
-    .done-btn {
-      margin-top: 14px;
-      width: 100%;
-    }
+    .done-btn { margin-top: 14px; width: 100%; }
 
     footer {
       margin-top: auto;
@@ -405,7 +354,7 @@
 
 <header>
   <div class="logo">
-    <svg viewBox="0 0 24 24"><path d="M10 15l5.19-3L10 9v6zm11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/></svg>
+    <svg viewBox="0 0 24 24"><path d="M10 15l5.19-3L10 9v6zm11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0-2.19-.16-3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/></svg>
   </div>
   <h1>Py<span>Tube</span> Downloader</h1>
 </header>
@@ -413,7 +362,7 @@
 <div class="container">
   <div class="hero">
     <h2>Download YouTube Videos</h2>
-    <p>Paste any YouTube link and pick your preferred quality</p>
+    <p>Paste any YouTube link — download as MP3, MP4, or any quality</p>
   </div>
 
   <div class="search-box">
@@ -449,7 +398,7 @@
         <div class="tab active" onclick="setTab('all', this)">All</div>
         <div class="tab" onclick="setTab('progressive', this)">Video + Audio</div>
         <div class="tab" onclick="setTab('video', this)">Video Only</div>
-        <div class="tab" onclick="setTab('audio', this)">Audio Only</div>
+        <div class="tab" onclick="setTab('audio', this)">Audio / MP3</div>
       </div>
 
       <div class="stream-list" id="streamList"></div>
@@ -481,13 +430,13 @@
 </div>
 
 <footer>
-  Built with pytube &mdash; for personal use only. Respect YouTube's Terms of Service.
+  Built with yt-dlp &mdash; for personal use only. Respect YouTube's Terms of Service.
 </footer>
 
 <script>
   let allStreams = [];
   let currentTab = 'all';
-  let selectedItag = null;
+  let selectedFormatId = null;
   let currentUrl = '';
   let currentJobId = null;
   let pollTimer = null;
@@ -555,7 +504,7 @@
     currentTab = tab;
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     el.classList.add('active');
-    selectedItag = null;
+    selectedFormatId = null;
     document.getElementById('downloadBtn').disabled = true;
     renderStreams();
   }
@@ -564,8 +513,8 @@
     const list = document.getElementById('streamList');
     let filtered = allStreams;
 
-    if (currentTab === 'progressive') filtered = allStreams.filter(s => s.progressive);
-    else if (currentTab === 'video') filtered = allStreams.filter(s => s.type === 'video' && !s.progressive);
+    if (currentTab === 'progressive') filtered = allStreams.filter(s => s.type === 'progressive');
+    else if (currentTab === 'video') filtered = allStreams.filter(s => s.type === 'video');
     else if (currentTab === 'audio') filtered = allStreams.filter(s => s.type === 'audio');
 
     if (!filtered.length) {
@@ -574,13 +523,28 @@
     }
 
     list.innerHTML = filtered.map(s => {
-      const label = s.type === 'audio'
-        ? `Audio — ${s.abr || 'Unknown'} (${s.subtype})`
-        : s.progressive
-          ? `Video + Audio — ${s.resolution || '?'} (${s.subtype})`
-          : `Video Only — ${s.resolution || '?'} (${s.subtype})`;
-      const sub = s.codecs.join(', ');
-      return `<div class="stream-item" onclick="selectStream(${s.itag}, this)">
+      const isMp3 = s.format_id === '__mp3__';
+      const isSelected = selectedFormatId === s.format_id;
+
+      let label = '';
+      if (isMp3) {
+        label = `MP3 Audio <span class="recommended-tag">★ Recommended</span>`;
+      } else if (s.type === 'progressive') {
+        label = `Video + Audio — ${s.resolution || '?'} .${s.ext}`;
+      } else if (s.type === 'video') {
+        label = `Video Only — ${s.resolution || '?'} .${s.ext}`;
+      } else {
+        label = `Audio — ${s.abr || s.note || '?'} .${s.ext}`;
+      }
+
+      const sub = isMp3
+        ? 'Best quality audio converted to MP3 via ffmpeg'
+        : [s.vcodec, s.acodec].filter(Boolean).join(' + ') || s.note || '';
+
+      const mp3Class = isMp3 ? ' mp3-highlight' : '';
+      const selectedClass = isSelected ? ' selected' : '';
+
+      return `<div class="stream-item${mp3Class}${selectedClass}" onclick="selectStream('${s.format_id}', this)">
         <div class="stream-radio"></div>
         <div class="stream-info">
           <div class="stream-label">${label}</div>
@@ -591,15 +555,15 @@
     }).join('');
   }
 
-  function selectStream(itag, el) {
+  function selectStream(formatId, el) {
     document.querySelectorAll('.stream-item').forEach(i => i.classList.remove('selected'));
     el.classList.add('selected');
-    selectedItag = itag;
+    selectedFormatId = formatId;
     document.getElementById('downloadBtn').disabled = false;
   }
 
   async function startDownload() {
-    if (!selectedItag || !currentUrl) return;
+    if (!selectedFormatId || !currentUrl) return;
     document.getElementById('downloadBtn').disabled = true;
     document.getElementById('progressCard').classList.add('show');
     document.getElementById('progressLabel').textContent = 'Downloading...';
@@ -612,7 +576,7 @@
       const res = await fetch('/api/download', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: currentUrl, itag: selectedItag })
+        body: JSON.stringify({ url: currentUrl, format_id: selectedFormatId })
       });
       const data = await res.json();
       if (!res.ok) { showError(data.error || 'Failed to start download'); return; }
@@ -637,8 +601,14 @@
           clearInterval(pollTimer);
           document.getElementById('progressLabel').textContent = 'Download complete!';
           document.getElementById('progressStatus').textContent = data.filename || 'File ready.';
+          document.getElementById('progressPct').textContent = '100%';
+          document.getElementById('progressFill').style.width = '100%';
           document.getElementById('doneBtn').style.display = 'block';
           document.getElementById('downloadBtn').disabled = false;
+        } else if (data.status === 'processing') {
+          document.getElementById('progressStatus').textContent = 'Converting to MP3...';
+          document.getElementById('progressPct').textContent = '99%';
+          document.getElementById('progressFill').style.width = '99%';
         } else if (data.status === 'error') {
           clearInterval(pollTimer);
           showError(data.error || 'Download failed.');
@@ -664,7 +634,7 @@
     document.getElementById('progressCard').classList.remove('show');
     clearError();
     allStreams = [];
-    selectedItag = null;
+    selectedFormatId = null;
     currentUrl = '';
     currentJobId = null;
     if (pollTimer) clearInterval(pollTimer);
