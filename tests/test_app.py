@@ -11,9 +11,7 @@ def test_build_ydl_opts_defaults(monkeypatch):
     opts = app.build_ydl_opts(skip_download=True)
 
     assert opts['skip_download'] is True
-    assert opts['extractor_args']['youtube']['player_client'] == [
-        'tv_embedded', 'android', 'ios', 'web'
-    ]
+    assert 'extractor_args' not in opts
     assert 'cookiefile' not in opts
     assert 'cookiesfrombrowser' not in opts
 

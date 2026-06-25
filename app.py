@@ -11,8 +11,6 @@ os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
 
 download_jobs = {}
 
-DEFAULT_PLAYER_CLIENTS = ('tv_embedded', 'android', 'ios', 'web')
-
 
 def _split_env_list(value):
     if not value:
@@ -22,7 +20,7 @@ def _split_env_list(value):
 
 def _player_clients():
     clients = _split_env_list(os.environ.get('YTDLP_PLAYER_CLIENTS'))
-    return clients or list(DEFAULT_PLAYER_CLIENTS)
+    return clients
 
 
 def _cookies_from_browser():
@@ -45,12 +43,15 @@ def build_ydl_opts(*, skip_download=False, progress_hooks=None, format_id=None):
     opts = {
         'quiet': True,
         'no_warnings': True,
-        'extractor_args': {
-            'youtube': {
-                'player_client': _player_clients(),
-            }
-        },
     }
+
+    player_clients = _player_clients()
+    if player_clients:
+        opts['extractor_args'] = {
+            'youtube': {
+                'player_client': player_clients,
+            }
+        }
 
     if skip_download:
         opts['skip_download'] = True
