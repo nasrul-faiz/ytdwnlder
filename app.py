@@ -1,4 +1,5 @@
 import os
+import shutil
 import uuid
 import threading
 import json
@@ -11,6 +12,8 @@ os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
 
 download_jobs = {}
 
+DEFAULT_PLAYER_CLIENTS = ('tv_embedded', 'android', 'ios', 'web')
+
 
 def _split_env_list(value):
     if not value:
@@ -20,7 +23,7 @@ def _split_env_list(value):
 
 def _player_clients():
     clients = _split_env_list(os.environ.get('YTDLP_PLAYER_CLIENTS'))
-    return clients
+    return clients or list(DEFAULT_PLAYER_CLIENTS)
 
 
 def _cookies_from_browser():
@@ -39,19 +42,16 @@ def _cookies_from_browser():
     return tuple(parts)
 
 
-def build_ydl_opts(*, skip_download=False, progress_hooks=None, format_id=None):
+def build_ydl_opts(*, skip_download=False, progress_hooks=None, format_id=None, mp3=False):
     opts = {
         'quiet': True,
         'no_warnings': True,
-    }
-
-    player_clients = _player_clients()
-    if player_clients:
-        opts['extractor_args'] = {
+        'extractor_args': {
             'youtube': {
-                'player_client': player_clients,
+                'player_client': _player_clients(),
             }
-        }
+        },
+    }
 
     if skip_download:
         opts['skip_download'] = True
@@ -68,7 +68,19 @@ def build_ydl_opts(*, skip_download=False, progress_hooks=None, format_id=None):
     if cookies_from_browser:
         opts['cookiesfrombrowser'] = cookies_from_browser
 
+    if mp3:
+        opts['format'] = 'bestaudio/best'
+        opts['postprocessors'] = [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }]
+
     return opts
+
+
+def ffmpeg_available():
+    return bool(shutil.which('ffmpeg') and shutil.which('ffprobe'))
 
 
 def human_size(n_bytes):
@@ -155,20 +167,22 @@ def get_info():
             0 if x['type'] == 'progressive' else (1 if x['type'] == 'video' else 2),
         ))
 
-        mp3_option = {
-            'format_id': '__mp3__',
-            'type': 'audio',
-            'ext': 'mp3',
-            'resolution': None,
-            'abr': '192kbps',
-            'vbr': None,
-            'filesize': '~varies',
-            'note': 'Best audio → MP3',
-            'has_video': False,
-            'has_audio': True,
-            'vcodec': None,
-            'acodec': 'mp3',
-        }
+        response_streams = list(streams)
+        if ffmpeg_available():
+            response_streams.insert(0, {
+                'format_id': '__mp3__',
+                'type': 'audio',
+                'ext': 'mp3',
+                'resolution': None,
+                'abr': '128kbps',
+                'vbr': None,
+                'filesize': '~varies',
+                'note': 'Best audio -> MP3',
+                'has_video': False,
+                'has_audio': True,
+                'vcodec': None,
+                'acodec': 'mp3',
+            })
 
         return jsonify({
             'title': title,
@@ -176,7 +190,7 @@ def get_info():
             'duration': duration,
             'thumbnail': thumbnail,
             'views': views,
-            'streams': [mp3_option] + streams,
+            'streams': response_streams,
         })
 
     except Exception as e:
@@ -199,6 +213,11 @@ def start_download():
 
     if not url or not format_id:
         return jsonify({'error': 'URL and format required'}), 400
+
+    if format_id == '__mp3__' and not ffmpeg_available():
+        return jsonify({
+            'error': 'MP3 conversion is unavailable on this server because ffmpeg and ffprobe are not installed.'
+        }), 400
 
     job_id = str(uuid.uuid4())
     out_dir = os.path.join(DOWNLOAD_FOLDER, job_id)
@@ -235,12 +254,9 @@ def start_download():
             if format_id == '__mp3__':
                 ydl_opts = {
                     **common_opts,
-                    'format': 'bestaudio/best',
-                    'postprocessors': [{
-                        'key': 'FFmpegExtractAudio',
-                        'preferredcodec': 'mp3',
-                        'preferredquality': '192',
-                    }],
+                    **build_ydl_opts(mp3=True),
+                    'outtmpl': common_opts['outtmpl'],
+                    'progress_hooks': common_opts['progress_hooks'],
                 }
             else:
                 ydl_opts = {
