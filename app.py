@@ -40,6 +40,7 @@ def get_info():
             'quiet': True,
             'no_warnings': True,
             'skip_download': True,
+            'extractor_args': {'youtube': {'player_client': ['tv_embedded']}},
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
@@ -166,26 +167,28 @@ def start_download():
                 download_jobs[job_id]['status'] = 'processing'
 
         try:
+            common_opts = {
+                'outtmpl': os.path.join(out_dir, '%(title)s.%(ext)s'),
+                'progress_hooks': [progress_hook],
+                'quiet': True,
+                'no_warnings': True,
+                'extractor_args': {'youtube': {'player_client': ['tv_embedded']}},
+            }
+
             if format_id == '__mp3__':
                 ydl_opts = {
+                    **common_opts,
                     'format': 'bestaudio/best',
-                    'outtmpl': os.path.join(out_dir, '%(title)s.%(ext)s'),
                     'postprocessors': [{
                         'key': 'FFmpegExtractAudio',
                         'preferredcodec': 'mp3',
                         'preferredquality': '192',
                     }],
-                    'progress_hooks': [progress_hook],
-                    'quiet': True,
-                    'no_warnings': True,
                 }
             else:
                 ydl_opts = {
+                    **common_opts,
                     'format': format_id,
-                    'outtmpl': os.path.join(out_dir, '%(title)s.%(ext)s'),
-                    'progress_hooks': [progress_hook],
-                    'quiet': True,
-                    'no_warnings': True,
                 }
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
