@@ -61,3 +61,56 @@ def test_get_info_rewrites_bot_error(monkeypatch):
             'on the server running this app.'
         )
     }
+
+
+def test_get_info_omits_mp3_when_ffmpeg_missing(monkeypatch):
+    class FakeYoutubeDL:
+        def __init__(self, params):
+            self.params = params
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def extract_info(self, url, download=False):
+            return {
+                'title': 'Test',
+                'uploader': 'Uploader',
+                'duration': 90,
+                'thumbnail': 'thumb.jpg',
+                'view_count': 123,
+                'formats': [{
+                    'format_id': '140',
+                    'ext': 'm4a',
+                    'acodec': 'mp4a.40.2',
+                    'vcodec': 'none',
+                    'abr': 128,
+                }],
+            }
+
+    monkeypatch.setattr(app, 'ffmpeg_available', lambda: False)
+
+    with mock.patch('yt_dlp.YoutubeDL', FakeYoutubeDL):
+        client = app.app.test_client()
+        response = client.post('/api/info', json={'url': 'https://youtu.be/test'})
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert [stream['format_id'] for stream in payload['streams']] == ['140']
+
+
+def test_start_download_rejects_mp3_without_ffmpeg(monkeypatch):
+    monkeypatch.setattr(app, 'ffmpeg_available', lambda: False)
+
+    client = app.app.test_client()
+    response = client.post('/api/download', json={
+        'url': 'https://youtu.be/test',
+        'format_id': '__mp3__',
+    })
+
+    assert response.status_code == 400
+    assert response.get_json() == {
+        'error': 'MP3 conversion is unavailable on this server because ffmpeg and ffprobe are not installed.'
+    }

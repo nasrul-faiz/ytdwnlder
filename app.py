@@ -1,4 +1,5 @@
 import os
+import shutil
 import uuid
 import threading
 import json
@@ -76,6 +77,10 @@ def build_ydl_opts(*, skip_download=False, progress_hooks=None, format_id=None, 
         }]
 
     return opts
+
+
+def ffmpeg_available():
+    return bool(shutil.which('ffmpeg') and shutil.which('ffprobe'))
 
 
 def human_size(n_bytes):
@@ -162,20 +167,22 @@ def get_info():
             0 if x['type'] == 'progressive' else (1 if x['type'] == 'video' else 2),
         ))
 
-        mp3_option = {
-            'format_id': '__mp3__',
-            'type': 'audio',
-            'ext': 'mp3',
-            'resolution': None,
-            'abr': '128kbps',
-            'vbr': None,
-            'filesize': '~varies',
-            'note': 'Best audio → MP3',
-            'has_video': False,
-            'has_audio': True,
-            'vcodec': None,
-            'acodec': 'mp3',
-        }
+        response_streams = list(streams)
+        if ffmpeg_available():
+            response_streams.insert(0, {
+                'format_id': '__mp3__',
+                'type': 'audio',
+                'ext': 'mp3',
+                'resolution': None,
+                'abr': '128kbps',
+                'vbr': None,
+                'filesize': '~varies',
+                'note': 'Best audio -> MP3',
+                'has_video': False,
+                'has_audio': True,
+                'vcodec': None,
+                'acodec': 'mp3',
+            })
 
         return jsonify({
             'title': title,
@@ -183,7 +190,7 @@ def get_info():
             'duration': duration,
             'thumbnail': thumbnail,
             'views': views,
-            'streams': [mp3_option] + streams,
+            'streams': response_streams,
         })
 
     except Exception as e:
@@ -206,6 +213,11 @@ def start_download():
 
     if not url or not format_id:
         return jsonify({'error': 'URL and format required'}), 400
+
+    if format_id == '__mp3__' and not ffmpeg_available():
+        return jsonify({
+            'error': 'MP3 conversion is unavailable on this server because ffmpeg and ffprobe are not installed.'
+        }), 400
 
     job_id = str(uuid.uuid4())
     out_dir = os.path.join(DOWNLOAD_FOLDER, job_id)
