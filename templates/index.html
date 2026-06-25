@@ -561,6 +561,33 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ── Transition spinner overlay ── */
+    #transitionOverlay {
+      position: fixed; inset: 0; z-index: 2000;
+      background: var(--overlay-bg);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 16px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    #transitionOverlay.show {
+      opacity: 1; pointer-events: all;
+    }
+
+    .trans-spinner {
+      width: 48px; height: 48px;
+      border: 4px solid rgba(255,68,68,0.2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    .trans-label {
+      font-size: 0.85rem; color: var(--text2); font-weight: 500;
+    }
+
     @media (max-width: 520px) {
       .video-meta { flex-direction: column; }
       .thumbnail { width: 100%; height: 170px; }
@@ -581,6 +608,12 @@
   <div class="pin-dots" id="pinDots"></div>
   <div class="pin-error" id="pinError"></div>
   <div class="pin-pad" id="pinPad"></div>
+</div>
+
+<!-- ══════════════ TRANSITION OVERLAY ══════════════ -->
+<div id="transitionOverlay">
+  <div class="trans-spinner"></div>
+  <div class="trans-label" id="transLabel">Loading...</div>
 </div>
 
 <!-- ══════════════ HEADER ══════════════ -->
@@ -790,6 +823,19 @@ document.addEventListener('click', e => {
 });
 
 /* ════════════════════════════════════════════
+   TRANSITION SPINNER
+════════════════════════════════════════════ */
+function showTransition(label, callback, duration = 700) {
+  const overlay = document.getElementById('transitionOverlay');
+  document.getElementById('transLabel').textContent = label;
+  overlay.classList.add('show');
+  setTimeout(() => {
+    callback();
+    overlay.classList.remove('show');
+  }, duration);
+}
+
+/* ════════════════════════════════════════════
    PIN LOCK
 ════════════════════════════════════════════ */
 function buildPinDots(containerId, length, input) {
@@ -836,8 +882,10 @@ function pinKeyPress(key) {
 
   if (pinInput.length === pinLength) {
     if (pinInput === savedPin) {
-      document.getElementById('pinLock').classList.add('hidden');
-      pinLocked = false;
+      showTransition('Welcome back!', () => {
+        document.getElementById('pinLock').classList.add('hidden');
+        pinLocked = false;
+      });
     } else {
       document.getElementById('pinDots').classList.add('shake');
       setTimeout(() => document.getElementById('pinDots').classList.remove('shake'), 450);
@@ -980,11 +1028,13 @@ function cpKeyPress(key) {
 ════════════════════════════════════════════ */
 function logOut() {
   closeMenu();
-  pinInput = '';
-  buildPinDots('pinDots', pinLength, pinInput);
-  document.getElementById('pinError').textContent = '';
-  document.getElementById('pinLock').classList.remove('hidden');
-  pinLocked = true;
+  showTransition('Locking...', () => {
+    pinInput = '';
+    buildPinDots('pinDots', pinLength, pinInput);
+    document.getElementById('pinError').textContent = '';
+    document.getElementById('pinLock').classList.remove('hidden');
+    pinLocked = true;
+  });
 }
 
 function openAbout() {
