@@ -630,22 +630,6 @@
 </head>
 <body>
 
-<!-- ══════════════ PIN LOCK SCREEN ══════════════ -->
-<div id="pinLock">
-  <div class="pin-lock-icon">
-    <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-  </div>
-  <div class="pin-title">Enter Passcode</div>
-  <div class="pin-subtitle" id="pinSubtitle">PyTube Downloader</div>
-  <div class="pin-dots" id="pinDots"></div>
-  <div class="pin-error" id="pinError"></div>
-  <div class="pin-pad" id="pinPad"></div>
-  <div class="pin-text-input-wrap" id="pinTextWrap" style="display:none">
-    <input type="password" id="pinTextInput" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="••••" autocomplete="off" />
-  </div>
-  <div class="pin-text-input-toggle" id="pinToggleMode" onclick="togglePinInputMode()">Tak nampak nombor? Taip di sini</div>
-</div>
-
 <!-- ══════════════ TRANSITION OVERLAY ══════════════ -->
 <div id="transitionOverlay">
   <div class="trans-spinner"></div>
@@ -663,11 +647,6 @@
       <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
     </div>
     <div class="dropdown" id="dropdown">
-      <button class="dropdown-item" onclick="openChangePw()">
-        <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-        Change Passcode
-      </button>
-      <div class="dropdown-divider"></div>
       <div class="dropdown-item theme-toggle-row" onclick="toggleTheme()">
         <div style="display:flex;align-items:center;gap:12px">
           <svg viewBox="0 0 24 24"><path d="M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69zM12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm0-10c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/></svg>
@@ -681,11 +660,6 @@
       <button class="dropdown-item" onclick="openAbout()">
         <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
         About
-      </button>
-      <div class="dropdown-divider"></div>
-      <button class="dropdown-item" onclick="logOut()" style="color:#ff4444">
-        <svg viewBox="0 0 24 24" style="fill:#ff4444"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
-        Log Out
       </button>
     </div>
   </div>
@@ -758,21 +732,6 @@
 
 <footer>Built with yt-dlp &mdash; for personal use only. Respect YouTube's Terms of Service.</footer>
 
-<!-- ══════════════ CHANGE PASSCODE MODAL ══════════════ -->
-<div class="modal-overlay hidden" id="changePwModal">
-  <div class="modal">
-    <div class="modal-title" id="cpTitle">Verify Current Passcode</div>
-    <div class="modal-sub" id="cpSub">Enter your current passcode to continue.</div>
-    <div class="modal-pin-dots" id="cpDots"></div>
-    <div class="modal-pin-error" id="cpError"></div>
-    <div class="modal-pin-pad" id="cpPad"></div>
-    <div class="modal-digit-toggle" id="cpDigitToggle" onclick="cpToggleLength()"></div>
-    <div class="modal-actions">
-      <button class="btn-sm btn-cancel" onclick="closeChangePw()">Cancel</button>
-    </div>
-  </div>
-</div>
-
 <!-- ══════════════ ABOUT MODAL ══════════════ -->
 <div class="modal-overlay hidden" id="aboutModal">
   <div class="modal">
@@ -782,11 +741,10 @@
     <div class="about-name">PyTube Downloader</div>
     <div class="about-version">Version 2.0 &bull; Built on yt-dlp</div>
     <div class="about-desc">
-      A private YouTube downloader supporting MP3, MP4, and all available stream formats. Protected by a personal passcode.
+      A private YouTube downloader supporting MP3, MP4, and all available stream formats.
     </div>
     <div class="about-row"><span>Engine</span><span>yt-dlp + ffmpeg</span></div>
     <div class="about-row"><span>Audio</span><span>MP3 192kbps via ffmpeg</span></div>
-    <div class="about-row"><span>Security</span><span>Passcode protected</span></div>
     <div class="about-row"><span>Mode</span><span id="aboutMode"></span></div>
     <div style="margin-top:20px;text-align:center">
       <button class="btn" onclick="document.getElementById('aboutModal').classList.add('hidden')">Close</button>
@@ -798,29 +756,7 @@
 /* ════════════════════════════════════════════
    STATE & CONSTANTS
 ════════════════════════════════════════════ */
-const PIN_KEYS = [
-  {n:'1', s:''}, {n:'2', s:'ABC'}, {n:'3', s:'DEF'},
-  {n:'4', s:'GHI'}, {n:'5', s:'JKL'}, {n:'6', s:'MNO'},
-  {n:'7', s:'PQRS'}, {n:'8', s:'TUV'}, {n:'9', s:'WXYZ'},
-  {n:'', s:'', cls:'empty'}, {n:'0', s:'+'}, {n:'⌫', s:'', cls:'backspace'},
-];
-
-const DEFAULT_PIN = '6144';
-const LS_PIN = 'ytdl_pin';
 const LS_THEME = 'ytdl_theme';
-const LS_PIN_LEN = 'ytdl_pinlen';
-
-let savedPin = localStorage.getItem(LS_PIN) || DEFAULT_PIN;
-let pinLength = parseInt(localStorage.getItem(LS_PIN_LEN)) || 4;
-let pinInput = '';
-let pinLocked = true;
-
-// Change-pw state
-const CP_STEP = { VERIFY: 'verify', NEW: 'new', CONFIRM: 'confirm' };
-let cpStep = CP_STEP.VERIFY;
-let cpNewPin = '';
-let cpNewLength = 4;
-let cpInput = '';
 
 /* ════════════════════════════════════════════
    THEME
@@ -872,264 +808,8 @@ function showTransition(label, callback, duration = 700) {
 }
 
 /* ════════════════════════════════════════════
-   PIN LOCK
-════════════════════════════════════════════ */
-function buildPinDots(containerId, length, input) {
-  const el = document.getElementById(containerId);
-  el.innerHTML = '';
-  for (let i = 0; i < length; i++) {
-    const d = document.createElement('div');
-    d.className = 'pin-dot' + (i < input.length ? ' filled' : '');
-    el.appendChild(d);
-  }
-}
-
-function buildPinPad(padId, onKey) {
-  const pad = document.getElementById(padId);
-  pad.innerHTML = '';
-  PIN_KEYS.forEach(k => {
-    const btn = document.createElement('button');
-    btn.className = 'pin-key' + (k.cls ? ' ' + k.cls : '');
-    if (k.n) {
-      const num = document.createElement('span');
-      num.textContent = k.n;
-      btn.appendChild(num);
-      if (k.s) {
-        const sub = document.createElement('span');
-        sub.className = 'pin-key-sub';
-        sub.textContent = k.s;
-        btn.appendChild(sub);
-      }
-      btn.onclick = () => onKey(k.n);
-    }
-    pad.appendChild(btn);
-  });
-}
-
-function pinKeyPress(key) {
-  if (key === '⌫') {
-    pinInput = pinInput.slice(0, -1);
-  } else {
-    if (pinInput.length >= pinLength) return;
-    pinInput += key;
-  }
-  buildPinDots('pinDots', pinLength, pinInput);
-  document.getElementById('pinError').textContent = '';
-
-  if (pinInput.length === pinLength) {
-    if (pinInput === savedPin) {
-      showTransition('Welcome back!', () => {
-        document.getElementById('pinLock').classList.add('hidden');
-        pinLocked = false;
-      });
-    } else {
-      document.getElementById('pinDots').classList.add('shake');
-      setTimeout(() => document.getElementById('pinDots').classList.remove('shake'), 450);
-      document.getElementById('pinError').textContent = 'Incorrect passcode. Try again.';
-      pinInput = '';
-      setTimeout(() => buildPinDots('pinDots', pinLength, pinInput), 420);
-    }
-  }
-}
-
-buildPinDots('pinDots', pinLength, pinInput);
-buildPinPad('pinPad', pinKeyPress);
-
-// Keyboard support — desktop users can type PIN directly
-document.addEventListener('keydown', e => {
-  if (pinLocked) {
-    if (e.key >= '0' && e.key <= '9') pinKeyPress(e.key);
-    else if (e.key === 'Backspace') pinKeyPress('⌫');
-  }
-});
-
-// Text input fallback
-let pinInputMode = 'pad';
-function togglePinInputMode() {
-  pinInputMode = pinInputMode === 'pad' ? 'text' : 'pad';
-  const padEl = document.getElementById('pinPad');
-  const textWrap = document.getElementById('pinTextWrap');
-  const toggle = document.getElementById('pinToggleMode');
-  if (pinInputMode === 'text') {
-    padEl.style.display = 'none';
-    textWrap.style.display = 'flex';
-    toggle.textContent = 'Guna pad nombor';
-    const inp = document.getElementById('pinTextInput');
-    inp.value = '';
-    inp.focus();
-    inp.oninput = () => {
-      const val = inp.value.replace(/\D/g, '');
-      inp.value = val;
-      pinInput = val;
-      buildPinDots('pinDots', pinLength, pinInput);
-      document.getElementById('pinError').textContent = '';
-      if (pinInput.length === pinLength) {
-        inp.disabled = true;
-        if (pinInput === savedPin) {
-          showTransition('Welcome back!', () => {
-            document.getElementById('pinLock').classList.add('hidden');
-            pinLocked = false;
-          });
-        } else {
-          document.getElementById('pinDots').classList.add('shake');
-          setTimeout(() => document.getElementById('pinDots').classList.remove('shake'), 450);
-          document.getElementById('pinError').textContent = 'Incorrect passcode. Try again.';
-          pinInput = '';
-          setTimeout(() => {
-            inp.value = '';
-            inp.disabled = false;
-            inp.focus();
-            buildPinDots('pinDots', pinLength, pinInput);
-          }, 500);
-        }
-      }
-    };
-  } else {
-    padEl.style.display = '';
-    textWrap.style.display = 'none';
-    toggle.textContent = 'Tak nampak nombor? Taip di sini';
-    pinInput = '';
-    buildPinDots('pinDots', pinLength, pinInput);
-  }
-}
-
-/* ════════════════════════════════════════════
-   CHANGE PASSCODE MODAL
-════════════════════════════════════════════ */
-function buildModalDots(len, input) {
-  const el = document.getElementById('cpDots');
-  el.innerHTML = '';
-  for (let i = 0; i < len; i++) {
-    const d = document.createElement('div');
-    d.className = 'modal-pin-dot' + (i < input.length ? ' filled' : '');
-    el.appendChild(d);
-  }
-}
-
-function buildModalPad() {
-  const pad = document.getElementById('cpPad');
-  pad.innerHTML = '';
-  PIN_KEYS.forEach(k => {
-    const btn = document.createElement('button');
-    btn.className = 'modal-pin-key' + (k.cls ? ' ' + k.cls : '');
-    if (k.n) {
-      btn.textContent = k.n;
-      btn.onclick = () => cpKeyPress(k.n);
-    }
-    pad.appendChild(btn);
-  });
-}
-
-function cpUpdateToggle() {
-  const el = document.getElementById('cpDigitToggle');
-  if (cpStep === CP_STEP.VERIFY) {
-    el.textContent = '';
-    return;
-  }
-  el.textContent = cpNewLength === 4 ? 'Switch to 6-digit' : 'Switch to 4-digit';
-}
-
-function cpToggleLength() {
-  if (cpStep === CP_STEP.VERIFY) return;
-  cpNewLength = cpNewLength === 4 ? 6 : 4;
-  cpInput = '';
-  document.getElementById('cpError').textContent = '';
-  buildModalDots(cpNewLength, cpInput);
-  cpUpdateToggle();
-}
-
-function openChangePw() {
-  closeMenu();
-  cpStep = CP_STEP.VERIFY;
-  cpInput = '';
-  cpNewPin = '';
-  cpNewLength = pinLength;
-  document.getElementById('cpTitle').textContent = 'Verify Current Passcode';
-  document.getElementById('cpSub').textContent = 'Enter your current passcode to continue.';
-  document.getElementById('cpError').textContent = '';
-  buildModalDots(pinLength, cpInput);
-  buildModalPad();
-  cpUpdateToggle();
-  document.getElementById('changePwModal').classList.remove('hidden');
-}
-
-function closeChangePw() {
-  document.getElementById('changePwModal').classList.add('hidden');
-}
-
-function cpKeyPress(key) {
-  const curLen = cpStep === CP_STEP.VERIFY ? pinLength : cpNewLength;
-
-  if (key === '⌫') {
-    cpInput = cpInput.slice(0, -1);
-  } else {
-    if (cpInput.length >= curLen) return;
-    cpInput += key;
-  }
-
-  buildModalDots(curLen, cpInput);
-  document.getElementById('cpError').textContent = '';
-
-  if (cpInput.length === curLen) {
-    if (cpStep === CP_STEP.VERIFY) {
-      if (cpInput === savedPin) {
-        cpStep = CP_STEP.NEW;
-        cpInput = '';
-        document.getElementById('cpTitle').textContent = 'Enter New Passcode';
-        document.getElementById('cpSub').textContent = 'Choose a new ' + cpNewLength + '-digit passcode.';
-        buildModalDots(cpNewLength, cpInput);
-        cpUpdateToggle();
-      } else {
-        document.getElementById('cpDots').classList.add('shake');
-        setTimeout(() => document.getElementById('cpDots').classList.remove('shake'), 450);
-        document.getElementById('cpError').textContent = 'Incorrect passcode.';
-        cpInput = '';
-        setTimeout(() => buildModalDots(pinLength, cpInput), 420);
-      }
-    } else if (cpStep === CP_STEP.NEW) {
-      cpNewPin = cpInput;
-      cpStep = CP_STEP.CONFIRM;
-      cpInput = '';
-      document.getElementById('cpTitle').textContent = 'Confirm New Passcode';
-      document.getElementById('cpSub').textContent = 'Re-enter your new passcode.';
-      buildModalDots(cpNewLength, cpInput);
-    } else if (cpStep === CP_STEP.CONFIRM) {
-      if (cpInput === cpNewPin) {
-        savedPin = cpNewPin;
-        pinLength = cpNewLength;
-        localStorage.setItem(LS_PIN, savedPin);
-        localStorage.setItem(LS_PIN_LEN, pinLength);
-        closeChangePw();
-        buildPinDots('pinDots', pinLength, '');
-        updatePinToggle();
-        alert('Passcode changed successfully!');
-      } else {
-        document.getElementById('cpDots').classList.add('shake');
-        setTimeout(() => document.getElementById('cpDots').classList.remove('shake'), 450);
-        document.getElementById('cpError').textContent = 'Passcodes do not match. Try again.';
-        cpStep = CP_STEP.NEW;
-        cpInput = '';
-        document.getElementById('cpTitle').textContent = 'Enter New Passcode';
-        document.getElementById('cpSub').textContent = 'Choose a new ' + cpNewLength + '-digit passcode.';
-        setTimeout(() => buildModalDots(cpNewLength, cpInput), 420);
-      }
-    }
-  }
-}
-
-/* ════════════════════════════════════════════
    ABOUT MODAL
 ════════════════════════════════════════════ */
-function logOut() {
-  closeMenu();
-  showTransition('Locking...', () => {
-    pinInput = '';
-    buildPinDots('pinDots', pinLength, pinInput);
-    document.getElementById('pinError').textContent = '';
-    document.getElementById('pinLock').classList.remove('hidden');
-    pinLocked = true;
-  });
-}
 
 function openAbout() {
   closeMenu();
@@ -1141,10 +821,6 @@ function openAbout() {
 document.getElementById('aboutModal').addEventListener('click', e => {
   if (e.target === document.getElementById('aboutModal'))
     document.getElementById('aboutModal').classList.add('hidden');
-});
-
-document.getElementById('changePwModal').addEventListener('click', e => {
-  if (e.target === document.getElementById('changePwModal')) closeChangePw();
 });
 
 /* ════════════════════════════════════════════
