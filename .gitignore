@@ -141,3 +141,24 @@ env/
 
 # Token cache location
 __cache__/
+
+# Environment variables (never push secrets)
+.env
+.env.local
+.env.production
+
+# Replit-specific
+.replit
+replit.nix
+.pythonlibs/
+.upm/
+.local/
+.cache/
+
+# Downloaded media files
+*.mp3
+*.mp4
+*.webm
+*.m4a
+*.mkv
+zipFile.zip
