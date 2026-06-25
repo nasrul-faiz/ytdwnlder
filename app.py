@@ -11,6 +11,72 @@ os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
 
 download_jobs = {}
 
+DEFAULT_PLAYER_CLIENTS = ('tv_embedded', 'android', 'ios', 'web')
+
+
+def _split_env_list(value):
+    if not value:
+        return []
+    return [item.strip() for item in value.split(',') if item.strip()]
+
+
+def _player_clients():
+    clients = _split_env_list(os.environ.get('YTDLP_PLAYER_CLIENTS'))
+    return clients or list(DEFAULT_PLAYER_CLIENTS)
+
+
+def _cookies_from_browser():
+    browser = os.environ.get('YTDLP_COOKIES_FROM_BROWSER', '').strip()
+    if not browser:
+        return None
+
+    parts = [part.strip() for part in browser.split(':')]
+    browser_name = parts[0]
+    if not browser_name:
+        return None
+
+    while parts and parts[-1] == '':
+        parts.pop()
+
+    return tuple(parts)
+
+
+def build_ydl_opts(*, skip_download=False, progress_hooks=None, format_id=None, mp3=False):
+    opts = {
+        'quiet': True,
+        'no_warnings': True,
+        'extractor_args': {
+            'youtube': {
+                'player_client': _player_clients(),
+            }
+        },
+    }
+
+    if skip_download:
+        opts['skip_download'] = True
+    if progress_hooks:
+        opts['progress_hooks'] = progress_hooks
+    if format_id:
+        opts['format'] = format_id
+
+    cookiefile = os.environ.get('YTDLP_COOKIEFILE', '').strip()
+    if cookiefile:
+        opts['cookiefile'] = cookiefile
+
+    cookies_from_browser = _cookies_from_browser()
+    if cookies_from_browser:
+        opts['cookiesfrombrowser'] = cookies_from_browser
+
+    if mp3:
+        opts['format'] = 'bestaudio/best'
+        opts['postprocessors'] = [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }]
+
+    return opts
+
 
 def human_size(n_bytes):
     if not n_bytes:
@@ -36,12 +102,7 @@ def get_info():
 
     try:
         import yt_dlp
-        ydl_opts = {
-            'quiet': True,
-            'no_warnings': True,
-            'skip_download': True,
-            'extractor_args': {'youtube': {'player_client': ['tv_embedded']}},
-        }
+        ydl_opts = build_ydl_opts(skip_download=True)
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
 
@@ -126,7 +187,15 @@ def get_info():
         })
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        message = str(e)
+        if 'Sign in to confirm you’re not a bot' in message or "Sign in to confirm you're not a bot" in message:
+            message = (
+                'YouTube is asking for authentication for this video. '
+                'Set YTDLP_COOKIEFILE to an exported cookies.txt file or '
+                'YTDLP_COOKIES_FROM_BROWSER to a browser name such as chrome, firefox, or edge '
+                'on the server running this app.'
+            )
+        return jsonify({'error': message}), 500
 
 
 @app.route('/api/download', methods=['POST'])
@@ -167,23 +236,15 @@ def start_download():
                 download_jobs[job_id]['status'] = 'processing'
 
         try:
-            common_opts = {
-                'outtmpl': os.path.join(out_dir, '%(title)s.%(ext)s'),
-                'progress_hooks': [progress_hook],
-                'quiet': True,
-                'no_warnings': True,
-                'extractor_args': {'youtube': {'player_client': ['tv_embedded']}},
-            }
+            common_opts = build_ydl_opts(progress_hooks=[progress_hook])
+            common_opts['outtmpl'] = os.path.join(out_dir, '%(title)s.%(ext)s')
 
             if format_id == '__mp3__':
                 ydl_opts = {
                     **common_opts,
-                    'format': 'bestaudio/best',
-                    'postprocessors': [{
-                        'key': 'FFmpegExtractAudio',
-                        'preferredcodec': 'mp3',
-                        'preferredquality': '192',
-                    }],
+                    **build_ydl_opts(mp3=True),
+                    'outtmpl': common_opts['outtmpl'],
+                    'progress_hooks': common_opts['progress_hooks'],
                 }
             else:
                 ydl_opts = {
